@@ -1,0 +1,5 @@
+# Só o index.html vai pro GitHub Pages.
+Code.gs
+SETUP.md
+.claude/
+*.xlsx

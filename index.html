@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Financiamento — Karina</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-height:100vh}
+.pnl-header{background:#1F3864;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(31,56,100,.18)}
+.pnl-header-inner{display:flex;align-items:stretch;max-width:1500px;margin:0 auto}
+.pnl-header-brand{padding:14px 28px;flex:1;display:flex;align-items:center;gap:16px}
+.pnl-header-brand-text{display:flex;flex-direction:column;min-width:0}
+.pnl-header-brand .supra{font-size:10px;letter-spacing:2px;color:#7BAFD4;text-transform:uppercase;margin-bottom:2px}
+.pnl-header-brand .titulo{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.pnl-header-right{background:#2E5FA3;padding:14px 28px;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px}
+.pnl-header-right .lbl{font-size:10px;color:#AACCE8;letter-spacing:1.5px;text-transform:uppercase}
+.pnl-header-right .dt{font-size:13px;font-weight:600;color:#fff;font-family:'DM Mono',monospace}
+.pnl-header-right .usr{font-size:10.5px;color:#AACCE8;margin-top:4px;display:flex;align-items:center;gap:8px}
+.btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 9px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-sair:hover{background:rgba(255,255,255,.18)}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 28px;background:#EEF4FB;border-bottom:1px solid #E2EAF4;max-width:1500px;margin:0 auto;width:100%}
+.card{background:#fff;border:0.5px solid #E2EAF4;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;min-height:74px}
+.card .num{font-size:20px;font-weight:700;line-height:1.1}
+.card .leg{font-size:10.5px;color:#64748B;font-weight:500;margin-top:4px;line-height:1.3}
+.card .sub{font-size:10px;color:#94A3B8;margin-top:2px}
+.c-saldo{color:#1F3864}.c-amort{color:#16A34A}.c-juros{color:#B45309}.c-parc{color:#2E5FA3}.c-quit{color:#6B21A8}
+.sim{max-width:1500px;margin:0 auto;width:100%;padding:14px 28px;background:#fff;border-bottom:1px solid #E2EAF4}
+.sim-title{font-size:11px;font-weight:600;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sim-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.sim-field{display:flex;flex-direction:column;gap:4px}
+.sim-field label{font-size:10px;font-weight:600;color:#64748B;letter-spacing:.5px;text-transform:uppercase}
+.sim-field input,.sim-field select{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid #E2EAF4;font-family:'DM Sans',sans-serif;color:#1A2740;background:#fff;min-width:130px}
+.btn-sim{background:#fff;color:#2E5FA3;border:1px solid #2E5FA3;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;height:37px}
+.btn-sim:hover{background:#EEF4FB}
+.btn-confirmar{background:#1F3864;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;height:37px}
+.btn-confirmar:hover{background:#16294a}
+.btn-confirmar:disabled{opacity:.5;cursor:default}
+.sim-result{margin-top:12px;padding:12px 16px;border-radius:10px;background:#F0FDF4;border:1px solid #BBF7D0;font-size:13px;color:#15803D;display:none;line-height:1.6}
+.sim-result.show{display:block}
+.sim-result b{color:#14532D}
+.sim-result.warn{background:#FFF7ED;border-color:#FED7AA;color:#92400E}
+.sim-result.warn b{color:#7C2D12}
+.filtros{max-width:1500px;margin:0 auto;padding:12px 28px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #E2EAF4;background:#fff}
+.filtros select{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid #E2EAF4;background:#fff;font-family:'DM Sans',sans-serif;color:#1A2740;cursor:pointer}
+.sep{flex:1}
+.cont-label{font-size:12px;color:#64748B}
+.btn-atualizar{font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid #E2EAF4;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;color:#1A2740;transition:all .15s}
+.btn-atualizar:hover{border-color:#2E5FA3}
+.tabela-wrap{max-width:1500px;margin:0 auto;padding:16px 28px 40px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #E2EAF4;box-shadow:0 2px 12px rgba(31,56,100,.06);table-layout:fixed}
+thead tr{background:#1F3864}
+thead th{padding:11px 12px;text-align:left;font-size:10px;font-weight:600;color:#AACCE8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+tbody tr{border-bottom:1px solid #E2EAF4;transition:background .1s}
+tbody tr:hover{background:#EEF4FB}
+tbody tr.row-prox{background:#FFFBEB}
+tbody tr.row-prox:hover{background:#FEF3C7}
+td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
+.num-cell{font-family:'DM Mono',monospace;text-align:right}
+.td-n{width:54px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:#64748B}
+.td-data{width:96px;font-family:'DM Mono',monospace;font-size:11.5px;color:#475569}
+.td-money{width:120px}
+.td-extra{width:118px}
+.td-status{width:118px}
+.td-acoes{width:120px;text-align:center;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.badge::before{content:"●";font-size:6px}
+.badge-pago{background:#F0FDF4;color:#15803D}
+.badge-pend{background:#F1F5F9;color:#475569}
+.badge-atr{background:#FEF2F2;color:#B91C1C}
+.badge-prox{background:#FEF3C7;color:#92400E}
+.extra-tag{display:inline-block;background:#F3E8FF;color:#6B21A8;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;font-family:'DM Mono',monospace}
+.comp-link{color:#2E5FA3;font-size:11px;text-decoration:none}
+.comp-link:hover{text-decoration:underline}
+.btn-icon{background:none;border:1px solid #E2EAF4;border-radius:8px;padding:4px 7px;cursor:pointer;font-size:12px;color:#64748B;transition:all .15s;margin:0 2px;display:inline-flex;align-items:center;gap:3px;font-family:'DM Sans',sans-serif}
+.btn-icon:hover{border-color:#2E5FA3;color:#2E5FA3}
+.btn-icon.on{background:#F0FDF4;border-color:#86EFAC;color:#15803D}
+.vazio{text-align:center;padding:60px;color:#64748B;font-size:13px;display:none}
+.loading{text-align:center;padding:60px;color:#64748B;font-size:13px}
+.rodape{text-align:center;padding:16px;font-size:11px;color:#64748B;border-top:1px solid #E2EAF4;background:#fff}
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:500}
+.modal-bg.off{display:none}
+.modal{background:#fff;border-radius:16px;border:1px solid #E2EAF4;width:100%;max-width:560px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.15);max-height:84vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#64748B;line-height:1;padding:0 4px}
+.modal-section{margin-bottom:16px}
+.modal-section-title{font-size:11px;font-weight:600;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.resumo-parc{background:#F8FAFC;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.8;margin-bottom:14px}
+.resumo-parc .lin{display:flex;justify-content:space-between}
+.resumo-parc .lin b{font-family:'DM Mono',monospace}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.form-grid.full{grid-template-columns:1fr}
+.form-field{display:flex;flex-direction:column;gap:5px}
+.form-field label{font-size:11px;font-weight:600;color:#64748B;letter-spacing:.5px;text-transform:uppercase}
+.form-field input,.form-field select,.form-field textarea{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid #E2EAF4;font-family:'DM Sans',sans-serif;color:#1A2740;background:#fff}
+.form-field textarea{resize:none;height:60px}
+.pasta-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#2E5FA3;text-decoration:none;padding:6px 12px;border:1px solid #E2EAF4;border-radius:8px;font-weight:500}
+.form-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.btn-cancelar{background:none;border:1px solid #E2EAF4;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;color:#64748B;font-family:'DM Sans',sans-serif}
+.btn-perigo{background:#fff;border:1px solid #FECACA;color:#B91C1C;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-right:auto}
+.btn-perigo:hover{background:#FEF2F2}
+.login-tela{position:fixed;inset:0;background:linear-gradient(135deg,#1F3864 0%,#2E5FA3 100%);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.login-card{background:#fff;padding:36px 40px;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-width:380px;width:100%;text-align:center}
+.login-supra{font-size:10px;letter-spacing:2px;color:#7BAFD4;text-transform:uppercase;margin-bottom:6px;font-weight:600}
+.login-titulo{font-size:20px;font-weight:700;color:#1F3864;margin-bottom:6px}
+.login-sub{font-size:13px;color:#64748B;margin-bottom:24px;line-height:1.5}
+#g_id_signin{display:flex;justify-content:center;margin-bottom:8px;min-height:44px}
+.login-erro{background:#FEF2F2;color:#B91C1C;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:16px;line-height:1.4;text-align:left}
+.login-loading{font-size:12px;color:#64748B;margin-top:12px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1F3864;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:600;opacity:0;transform:translateY(10px);transition:all .25s}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.err{background:#B91C1C}
+@media(max-width:860px){
+  .pnl-header-inner{flex-direction:column}
+  .cards{grid-template-columns:repeat(2,1fr);padding:12px 16px}
+  .filtros{padding:10px 16px}
+  .tabela-wrap{padding:12px 16px 32px}
+  .sim{padding:12px 16px}
+  td{padding:8px 8px;font-size:11.5px}
+  .td-money:nth-child(4),.td-money:nth-child(5){display:none}
+  thead th:nth-child(4),thead th:nth-child(5){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="login-tela" id="loginTela">
+  <div class="login-card">
+    <div class="login-supra">Controle Financeiro Pessoal</div>
+    <div class="login-titulo">Financiamento — Karina</div>
+    <div class="login-sub">Entre com a conta Google autorizada.</div>
+    <div id="g_id_signin"></div>
+    <div class="login-loading" id="loginLoading" style="display:none">Verificando acesso…</div>
+    <div class="login-erro" id="loginErro" style="display:none"></div>
+  </div>
+</div>
+
+<div id="appConteudo" style="display:none">
+<div class="pnl-header">
+  <div class="pnl-header-inner">
+    <div class="pnl-header-brand">
+      <div class="pnl-header-brand-text">
+        <div class="supra">Controle de Financiamento</div>
+        <div class="titulo" id="tituloDevedor">Karina</div>
+      </div>
+    </div>
+    <div class="pnl-header-right">
+      <div class="lbl">Atualizado em</div>
+      <div class="dt" id="dt">—</div>
+      <div class="usr"><span id="userEmail"></span><button class="btn-sair" onclick="sair()">Sair</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="num c-saldo" id="c-saldo">—</div><div class="leg">Saldo devedor atual</div><div class="sub" id="c-saldo-sub"></div></div>
+  <div class="card"><div class="num c-amort" id="c-amort">—</div><div class="leg">Total amortizado</div><div class="sub" id="c-amort-sub"></div></div>
+  <div class="card"><div class="num c-juros" id="c-juros">—</div><div class="leg">Juros pagos</div><div class="sub" id="c-juros-sub"></div></div>
+  <div class="card"><div class="num c-parc" id="c-parc">—</div><div class="leg">Parcelas pagas</div><div class="sub" id="c-parc-sub"></div></div>
+  <div class="card"><div class="num c-quit" id="c-quit">—</div><div class="leg">Previsão de quitação</div><div class="sub" id="c-quit-sub"></div></div>
+</div>
+
+<div class="sim">
+  <div class="sim-title">⚡ Simular amortização extra</div>
+  <div class="sim-row">
+    <div class="sim-field">
+      <label>Na parcela nº</label>
+      <input type="number" id="sim-parc" min="1" placeholder="ex: 12">
+    </div>
+    <div class="sim-field">
+      <label>Valor extra (R$)</label>
+      <input type="number" id="sim-valor" min="0" step="0.01" placeholder="ex: 5000">
+    </div>
+    <button class="btn-sim" onclick="simular()">Simular</button>
+    <button class="btn-confirmar" id="btnConfirmarExtra" onclick="confirmarExtra()" disabled>Confirmar e registrar</button>
+  </div>
+  <div class="sim-result" id="sim-result"></div>
+</div>
+
+<div class="filtros">
+  <select id="fStatus" onchange="filtrar(this.value)">
+    <option value="todas">Todas as parcelas</option>
+    <option value="pendentes">Pendentes</option>
+    <option value="pagas">Pagas</option>
+    <option value="atraso">Em atraso</option>
+    <option value="extras">Com amortização extra</option>
+  </select>
+  <div class="sep"></div>
+  <span class="cont-label" id="contLabel"></span>
+  <button class="btn-atualizar" onclick="carregarDados()">↻ Atualizar</button>
+  <button class="btn-atualizar" onclick="abrirContrato()">⚙ Contrato</button>
+</div>
+
+<div class="tabela-wrap">
+  <div class="loading" id="loading">Carregando dados…</div>
+  <table id="tab" style="display:none">
+    <thead><tr>
+      <th class="td-n">Parc.</th>
+      <th class="td-data">Vencimento</th>
+      <th class="td-money num-cell">Amortização</th>
+      <th class="td-money num-cell">Juros</th>
+      <th class="td-money num-cell">Parcela</th>
+      <th class="td-extra num-cell">Extra</th>
+      <th class="td-money num-cell">Saldo após</th>
+      <th class="td-status">Status</th>
+      <th class="td-acoes"></th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="vazio" id="vazio">Nenhuma parcela encontrada.</div>
+</div>
+<div class="rodape">Controle pessoal de financiamento — uso privado</div>
+</div>
+
+<div class="modal-bg off" id="modalBg">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitulo">—</span>
+      <button class="modal-close" onclick="fecharModal()">×</button>
+    </div>
+    <div id="modalCorpo"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENT_ID = '864961214405-bipsb4fk0sr0sgi8m9ei81u87rhjshc4.apps.googleusercontent.com';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw5nGV_-CnGQRsARRcg3IlXDubibSYA8wXKHFc7rjxnEBLURIAXotf4VQrm2a11yLU60w/exec';
+
+let idToken = null;
+let userEmail = null;
+let CONTRATO = null;
+let PAGAMENTOS = [];   // [{nParcela, dataPagamento, valorPago, linkComprovante}]
+let EXTRAS = [];       // [{nParcela, valor, obs, linkComprovante}]
+let CRONOGRAMA = [];   // calculado
+let F = 'todas';
+let extraPendente = null; // {nParcela, valor} aguardando confirmação
+
+// === LOGIN ===
+function aguardarGSI(cb){
+  if (window.google && window.google.accounts && window.google.accounts.id) return cb();
+  setTimeout(function(){ aguardarGSI(cb); }, 100);
+}
+window.addEventListener('load', function(){
+  aguardarGSI(function(){
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: aposLogin,
+      auto_select: true,
+      cancel_on_tap_outside: false
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('g_id_signin'),
+      {theme:'filled_blue', size:'large', text:'signin_with', shape:'pill', width:300}
+    );
+    google.accounts.id.prompt();
+  });
+});
+
+async function aposLogin(response){
+  idToken = response.credential;
+  try {
+    const payload = JSON.parse(atob(idToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    userEmail = payload.email;
+  } catch(e) { userEmail = '—'; }
+  document.getElementById('loginErro').style.display = 'none';
+  document.getElementById('loginLoading').style.display = '';
+  const r = await chamar({acao:'ler'});
+  document.getElementById('loginLoading').style.display = 'none';
+  if (r.ok) {
+    document.getElementById('loginTela').style.display = 'none';
+    document.getElementById('appConteudo').style.display = '';
+    document.getElementById('userEmail').textContent = userEmail;
+    aplicarDados(r);
+  } else if (r.erro === 'sem_acesso') {
+    mostrarErroLogin('A conta ' + userEmail + ' não está autorizada. Verifique a allowlist no Apps Script.');
+  } else if (r.erro === 'token_invalido' || r.erro === 'sem_token') {
+    mostrarErroLogin('Sessão inválida. Tente entrar novamente.');
+  } else {
+    mostrarErroLogin('Erro: ' + (r.erro || 'desconhecido'));
+  }
+}
+
+function mostrarErroLogin(msg){
+  const el = document.getElementById('loginErro');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+function sair(){
+  google.accounts.id.disableAutoSelect();
+  idToken = null; userEmail = null;
+  location.reload();
+}
+
+async function chamar(payload){
+  payload.idToken = idToken;
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    const dados = await r.json();
+    if (!dados.ok && (dados.erro === 'token_invalido' || dados.erro === 'sem_token')) {
+      toast('Sessão expirada. Reconectando…', true);
+      setTimeout(function(){ location.reload(); }, 800);
+    }
+    return dados;
+  } catch(e){
+    return {ok:false, erro: String(e)};
+  }
+}
+
+function aplicarDados(r){
+  CONTRATO = r.contrato || {};
+  PAGAMENTOS = r.pagamentos || [];
+  EXTRAS = r.extras || [];
+  document.getElementById('tituloDevedor').textContent = CONTRATO.devedor || 'Financiamento';
+  recalcular();
+  render();
+}
+
+async function carregarDados(){
+  if (!idToken) return;
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("tab").style.display = "none";
+  document.getElementById("vazio").style.display = "none";
+  const r = await chamar({acao:'ler'});
+  if (!r.ok) {
+    document.getElementById("loading").textContent = "Erro: " + (r.erro || 'desconhecido');
+    return;
+  }
+  aplicarDados(r);
+  toast('Dados atualizados');
+}
+
+// === FORMATAÇÃO ===
+function fmtBRL(v){ return (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function fmtBRLc(v){ return (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(d){ return d.toLocaleDateString('pt-BR'); }
+function fmtMesAno(d){ return d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'}); }
+function parseDataBR(s){ if(!s) return null; const p=String(s).split('/').map(Number); return new Date(p[2],p[1]-1,p[0]); }
+function addMonths(date, k){
+  const d = new Date(date.getTime());
+  const dia = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+k);
+  const ult = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  d.setDate(Math.min(dia, ult));
+  return d;
+}
+
+// === MOTOR DE CÁLCULO (SAC — amortização constante) ===
+// Gera o cronograma mês a mês a partir do contrato + mapa de amortizações extras.
+function gerarCronograma(contrato, extrasMap){
+  const saldoIni = Number(contrato.saldoInicial) || 0;
+  const taxa     = Number(contrato.taxaMensal) || 0;
+  const prazo    = Number(contrato.prazo) || 1;
+  const amortBase = Number(contrato.amortizacaoBase) || (saldoIni / prazo);
+  const dataPrim = parseDataBR(contrato.dataPrimeira) || new Date();
+  const linhas = [];
+  let saldo = saldoIni;
+  let n = 0;
+  const MAX = 5000;
+  while (saldo > 0.005 && n < MAX) {
+    n++;
+    const juros = saldo * taxa;
+    const amort = Math.min(amortBase, saldo);
+    const saldoAposAmort = saldo - amort;
+    let extra = Number(extrasMap[n]) || 0;
+    if (extra > saldoAposAmort) extra = saldoAposAmort; // não amortiza além do saldo
+    if (extra < 0) extra = 0;
+    const saldoFim = saldoAposAmort - extra;
+    linhas.push({
+      n: n,
+      data: addMonths(dataPrim, n-1),
+      saldoIni: saldo,
+      juros: juros,
+      amort: amort,
+      extra: extra,
+      parcela: amort + juros,
+      saldoFim: saldoFim < 0.005 ? 0 : saldoFim
+    });
+    saldo = saldoFim;
+  }
+  return linhas;
+}
+
+function mapaExtras(extrasArr){
+  const m = {};
+  (extrasArr||[]).forEach(e => {
+    const n = Number(e.nParcela);
+    m[n] = (m[n] || 0) + (Number(e.valor) || 0);
+  });
+  return m;
+}
+
+function recalcular(){
+  CRONOGRAMA = gerarCronograma(CONTRATO, mapaExtras(EXTRAS));
+}
+
+function pagamentoDe(n){ return PAGAMENTOS.find(p => Number(p.nParcela) === Number(n)); }
+function extrasDe(n){ return EXTRAS.filter(e => Number(e.nParcela) === Number(n)); }
+
+function statusParcela(linha){
+  if (pagamentoDe(linha.n)) return 'pago';
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (linha.data < hoje) return 'atraso';
+  return 'pendente';
+}
+function proximaParcelaN(){
+  for (const l of CRONOGRAMA) { if (!pagamentoDe(l.n)) return l.n; }
+  return null;
+}
+
+// === RENDER ===
+function render(){
+  const prox = proximaParcelaN();
+  // ---- resumo ----
+  const pagos = CRONOGRAMA.filter(l => pagamentoDe(l.n));
+  const amortPago = pagos.reduce((s,l)=>s + l.amort + l.extra, 0);
+  const jurosPago = pagos.reduce((s,l)=>s + l.juros, 0);
+  // saldo atual = saldo após a última parcela paga (ou saldo inicial se nada pago)
+  let saldoAtual = Number(CONTRATO.saldoInicial)||0;
+  if (pagos.length){
+    const ultPagoN = Math.max(...pagos.map(l=>l.n));
+    const ln = CRONOGRAMA.find(l=>l.n===ultPagoN);
+    if (ln) saldoAtual = ln.saldoFim;
+  }
+  const totalParc = CRONOGRAMA.length;
+  const ultima = CRONOGRAMA[CRONOGRAMA.length-1];
+  document.getElementById('c-saldo').textContent = fmtBRL(saldoAtual);
+  document.getElementById('c-saldo-sub').textContent = 'de ' + fmtBRL(CONTRATO.saldoInicial) + ' inicial';
+  document.getElementById('c-amort').textContent = fmtBRL(amortPago);
+  const pctAmort = (Number(CONTRATO.saldoInicial)>0) ? (amortPago/Number(CONTRATO.saldoInicial)*100) : 0;
+  document.getElementById('c-amort-sub').textContent = pctAmort.toFixed(1) + '% do principal';
+  document.getElementById('c-juros').textContent = fmtBRL(jurosPago);
+  document.getElementById('c-juros-sub').textContent = 'pagos até agora';
+  document.getElementById('c-parc').textContent = pagos.length + ' / ' + totalParc;
+  document.getElementById('c-parc-sub').textContent = (totalParc - pagos.length) + ' restantes';
+  document.getElementById('c-quit').textContent = ultima ? fmtMesAno(ultima.data) : '—';
+  document.getElementById('c-quit-sub').textContent = ultima ? ('parcela ' + ultima.n) : '';
+
+  // ---- tabela ----
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  let linhas = CRONOGRAMA.slice();
+  if (F === 'pagas') linhas = linhas.filter(l => pagamentoDe(l.n));
+  else if (F === 'pendentes') linhas = linhas.filter(l => !pagamentoDe(l.n));
+  else if (F === 'atraso') linhas = linhas.filter(l => !pagamentoDe(l.n) && l.data < hoje);
+  else if (F === 'extras') linhas = linhas.filter(l => l.extra > 0);
+
+  document.getElementById('contLabel').textContent = linhas.length === CRONOGRAMA.length
+    ? CRONOGRAMA.length + ' parcelas'
+    : linhas.length + ' de ' + CRONOGRAMA.length + ' parcelas';
+
+  const tbody = document.getElementById('tbody');
+  const tab = document.getElementById('tab');
+  const vazio = document.getElementById('vazio');
+  document.getElementById('loading').style.display = 'none';
+  tbody.innerHTML = '';
+  if (!linhas.length){ tab.style.display='none'; vazio.style.display='block'; return; }
+  tab.style.display=''; vazio.style.display='none';
+
+  linhas.forEach(l => {
+    const st = statusParcela(l);
+    const pg = pagamentoDe(l.n);
+    const ehProx = (l.n === prox);
+    let badge;
+    if (st === 'pago') badge = '<span class="badge badge-pago">Paga</span>';
+    else if (st === 'atraso') badge = '<span class="badge badge-atr">Em atraso</span>';
+    else if (ehProx) badge = '<span class="badge badge-prox">Próxima</span>';
+    else badge = '<span class="badge badge-pend">Pendente</span>';
+
+    let extraCell = '';
+    if (l.extra > 0){
+      const exComp = extrasDe(l.n).find(e => e.linkComprovante);
+      extraCell = '<span class="extra-tag">+'+fmtBRLc(l.extra)+'</span>';
+    } else extraCell = '<span style="color:#CBD5E1">—</span>';
+
+    let statusCell = badge;
+    if (pg){
+      const vp = (Number(pg.valorPago)||0);
+      statusCell += '<div style="font-size:10px;color:#64748B;margin-top:3px;font-family:DM Mono">'+(pg.dataPagamento||'')+'</div>';
+      if (pg.linkComprovante) statusCell += '<a class="comp-link" href="'+pg.linkComprovante+'" target="_blank">📎 comprovante</a>';
+    }
+
+    const tr = document.createElement('tr');
+    if (ehProx) tr.className = 'row-prox';
+    tr.innerHTML =
+        '<td class="td-n">'+l.n+'</td>'
+      + '<td class="td-data">'+fmtData(l.data)+'</td>'
+      + '<td class="td-money num-cell">'+fmtBRLc(l.amort)+'</td>'
+      + '<td class="td-money num-cell">'+fmtBRLc(l.juros)+'</td>'
+      + '<td class="td-money num-cell"><b>'+fmtBRLc(l.parcela)+'</b></td>'
+      + '<td class="td-extra num-cell">'+extraCell+'</td>'
+      + '<td class="td-money num-cell">'+fmtBRLc(l.saldoFim)+'</td>'
+      + '<td class="td-status">'+statusCell+'</td>'
+      + '<td class="td-acoes">'
+        + (st==='pago'
+            ? '<button class="btn-icon on" onclick=\'abrirPagamento('+l.n+')\' title="Editar pagamento">✓ paga</button>'
+            : '<button class="btn-icon" onclick=\'abrirPagamento('+l.n+')\' title="Registrar pagamento">Pagar</button>')
+      + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function filtrar(v){ F = v; render(); }
+
+// === SIMULAÇÃO ===
+function simular(){
+  const n = parseInt(document.getElementById('sim-parc').value);
+  const v = parseFloat(document.getElementById('sim-valor').value);
+  const box = document.getElementById('sim-result');
+  extraPendente = null;
+  document.getElementById('btnConfirmarExtra').disabled = true;
+  if (!n || n < 1){ box.className='sim-result warn show'; box.innerHTML='Informe um número de parcela válido.'; return; }
+  if (!v || v <= 0){ box.className='sim-result warn show'; box.innerHTML='Informe um valor de amortização extra válido.'; return; }
+
+  const base = gerarCronograma(CONTRATO, mapaExtras(EXTRAS));
+  const extrasSim = EXTRAS.slice(); extrasSim.push({nParcela:n, valor:v});
+  const novo = gerarCronograma(CONTRATO, mapaExtras(extrasSim));
+
+  if (n > base.length){
+    box.className='sim-result warn show';
+    box.innerHTML='Na simulação o financiamento já estaria quitado antes da parcela '+n+' (prazo atual: '+base.length+' parcelas).';
+    return;
+  }
+
+  const jurosBase = base.reduce((s,l)=>s+l.juros,0);
+  const jurosNovo = novo.reduce((s,l)=>s+l.juros,0);
+  const economia = jurosBase - jurosNovo;
+  const mesesReduz = base.length - novo.length;
+  const quitBase = base[base.length-1].data;
+  const quitNovo = novo[novo.length-1].data;
+
+  box.className='sim-result show';
+  box.innerHTML =
+      'Amortizando <b>'+fmtBRL(v)+'</b> extra na parcela <b>'+n+'</b>:<br>'
+    + '• Prazo: de <b>'+base.length+'</b> para <b>'+novo.length+'</b> parcelas '
+    + (mesesReduz>0 ? '(<b>−'+mesesReduz+' meses</b>)' : '(sem mudança de prazo)') + '<br>'
+    + '• Economia de juros: <b>'+fmtBRL(economia)+'</b><br>'
+    + '• Quitação: de <b>'+fmtMesAno(quitBase)+'</b> para <b>'+fmtMesAno(quitNovo)+'</b>';
+  extraPendente = {nParcela:n, valor:v};
+  document.getElementById('btnConfirmarExtra').disabled = false;
+}
+
+async function confirmarExtra(){
+  if (!extraPendente) return;
+  const btn = document.getElementById('btnConfirmarExtra');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+  const r = await chamar({
+    acao:'adicionar_extra',
+    nParcela: extraPendente.nParcela,
+    valor: extraPendente.valor,
+    obs: ''
+  });
+  btn.textContent = 'Confirmar e registrar';
+  if (r.ok){
+    toast('Amortização extra registrada');
+    document.getElementById('sim-result').className='sim-result';
+    document.getElementById('sim-parc').value='';
+    document.getElementById('sim-valor').value='';
+    extraPendente = null;
+    await carregarDados();
+  } else {
+    btn.disabled=false;
+    toast('Erro: '+(r.erro||'falha'), true);
+  }
+}
+
+// === MODAL DE PAGAMENTO ===
+function abrirPagamento(n){
+  const l = CRONOGRAMA.find(x => x.n === n);
+  if (!l) return;
+  const pg = pagamentoDe(n);
+  const exs = extrasDe(n);
+  document.getElementById('modalTitulo').textContent = 'Parcela ' + n + ' — ' + fmtData(l.data);
+
+  let extraInfo = '';
+  if (exs.length){
+    extraInfo = '<div class="lin"><span>Amortização extra</span><b>'+fmtBRL(l.extra)+'</b></div>';
+  }
+
+  const valorDefault = pg ? (Number(pg.valorPago)||l.parcela) : l.parcela;
+  const dataDefault = pg && pg.dataPagamento ? paraInputDate(pg.dataPagamento) : paraInputDate(fmtData(l.data));
+
+  let html =
+      '<div class="resumo-parc">'
+    + '<div class="lin"><span>Amortização</span><b>'+fmtBRL(l.amort)+'</b></div>'
+    + '<div class="lin"><span>Juros</span><b>'+fmtBRL(l.juros)+'</b></div>'
+    + '<div class="lin" style="border-top:1px solid #E2EAF4;margin-top:4px;padding-top:4px"><span>Valor da parcela</span><b>'+fmtBRL(l.parcela)+'</b></div>'
+    + extraInfo
+    + '<div class="lin"><span>Saldo após</span><b>'+fmtBRL(l.saldoFim)+'</b></div>'
+    + '</div>'
+    + '<div class="modal-section"><div class="modal-section-title">Registrar pagamento</div>'
+    + '<div class="form-grid">'
+      + '<div class="form-field"><label>Data do pagamento</label><input type="date" id="pg-data" value="'+dataDefault+'"></div>'
+      + '<div class="form-field"><label>Valor pago (R$)</label><input type="number" id="pg-valor" step="0.01" value="'+(Number(valorDefault).toFixed(2))+'"></div>'
+    + '</div></div>'
+    + '<div class="modal-section"><div class="modal-section-title">Comprovante</div>';
+  if (pg && pg.linkComprovante){
+    html += '<a class="pasta-link" href="'+pg.linkComprovante+'" target="_blank">📎 Ver comprovante atual</a><div style="height:8px"></div>';
+  }
+  html += '<input type="file" id="pg-file" style="display:none" onchange="document.getElementById(\'pg-file-nome\').textContent=this.files[0]?this.files[0].name:\'\'">'
+    + '<button class="btn-icon" onclick="document.getElementById(\'pg-file\').click()">📤 Selecionar comprovante</button>'
+    + '<span id="pg-file-nome" style="font-size:11.5px;color:#64748B;margin-left:8px"></span>'
+    + '<div style="font-size:10.5px;color:#94A3B8;margin-top:6px">Opcional. PDF, imagem, etc. Máx. ~25 MB.</div>'
+    + '</div>'
+    + '<div class="form-acoes">'
+    + (pg ? '<button class="btn-perigo" id="btnDesmarcar" onclick="desmarcarPagamento('+n+')">Desfazer pagamento</button>' : '')
+    + '<button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>'
+    + '<button class="btn-confirmar" id="btnPagar" onclick="salvarPagamento('+n+')">'+(pg?'Salvar alterações':'Confirmar pagamento')+'</button>'
+    + '</div>';
+  document.getElementById('modalCorpo').innerHTML = html;
+  abrirModal();
+}
+
+async function salvarPagamento(n){
+  const dataRaw = document.getElementById('pg-data').value;
+  const valor = parseFloat(document.getElementById('pg-valor').value);
+  if (!dataRaw){ alert('Informe a data do pagamento.'); return; }
+  if (isNaN(valor) || valor < 0){ alert('Informe um valor válido.'); return; }
+  const dataFmt = dataRaw.split('-').reverse().join('/');
+  const btn = document.getElementById('btnPagar');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  const r = await chamar({
+    acao:'registrar_pagamento',
+    nParcela: n,
+    dataPagamento: dataFmt,
+    valorPago: valor
+  });
+  if (!r.ok){
+    btn.disabled=false; btn.textContent='Confirmar pagamento';
+    toast('Erro: '+(r.erro||'falha'), true);
+    return;
+  }
+
+  // anexar comprovante, se houver
+  const file = document.getElementById('pg-file').files[0];
+  if (file){
+    btn.textContent = 'Enviando comprovante…';
+    const ok = await enviarComprovante('pagamento', n, file);
+    if (!ok){ toast('Pagamento salvo, mas falhou o comprovante', true); }
+  }
+  toast('Pagamento registrado');
+  fecharModal();
+  await carregarDados();
+}
+
+async function desmarcarPagamento(n){
+  if (!confirm('Desfazer o registro de pagamento da parcela '+n+'? O comprovante anexado permanece no Drive.')) return;
+  const btn = document.getElementById('btnDesmarcar');
+  btn.disabled = true; btn.textContent = 'Removendo…';
+  const r = await chamar({acao:'desmarcar_pagamento', nParcela:n});
+  if (r.ok){ toast('Pagamento desfeito'); fecharModal(); await carregarDados(); }
+  else { btn.disabled=false; btn.textContent='Desfazer pagamento'; toast('Erro: '+(r.erro||'falha'), true); }
+}
+
+function enviarComprovante(tipo, n, file){
+  return new Promise(resolve => {
+    const tamanhoMB = file.size/(1024*1024);
+    if (tamanhoMB > 25){ toast('Comprovante > 25 MB, ignorado', true); return resolve(false); }
+    const reader = new FileReader();
+    reader.onload = async function(){
+      const base64 = reader.result.split(',')[1];
+      const r = await chamar({
+        acao:'anexar_comprovante',
+        tipo: tipo,
+        nParcela: n,
+        nomeArquivo: file.name,
+        mimeType: file.type,
+        conteudoBase64: base64
+      });
+      resolve(!!r.ok);
+    };
+    reader.onerror = function(){ resolve(false); };
+    reader.readAsDataURL(file);
+  });
+}
+
+// === CONTRATO ===
+function abrirContrato(){
+  const c = CONTRATO || {};
+  document.getElementById('modalTitulo').textContent = 'Parâmetros do contrato';
+  document.getElementById('modalCorpo').innerHTML =
+      '<div class="modal-section">'
+    + '<div class="form-grid full"><div class="form-field"><label>Devedor</label>'
+    + '<input type="text" id="ct-devedor" value="'+(c.devedor||'').replace(/"/g,'&quot;')+'"></div></div>'
+    + '<div class="form-grid">'
+      + '<div class="form-field"><label>Saldo inicial (R$)</label><input type="number" step="0.01" id="ct-saldo" value="'+(c.saldoInicial||'')+'"></div>'
+      + '<div class="form-field"><label>Prazo (meses)</label><input type="number" id="ct-prazo" value="'+(c.prazo||'')+'"></div>'
+    + '</div>'
+    + '<div class="form-grid">'
+      + '<div class="form-field"><label>Taxa mensal (ex: 0.006944)</label><input type="number" step="0.0000001" id="ct-taxa" value="'+(c.taxaMensal||'')+'"></div>'
+      + '<div class="form-field"><label>Amortização base (R$)</label><input type="number" step="0.01" id="ct-amort" value="'+(c.amortizacaoBase||'')+'"></div>'
+    + '</div>'
+    + '<div class="form-grid full"><div class="form-field"><label>Data da 1ª parcela (dd/mm/aaaa)</label>'
+    + '<input type="text" id="ct-dataprim" value="'+(c.dataPrimeira||'')+'" placeholder="04/03/2026"></div></div>'
+    + '<div style="font-size:11px;color:#94A3B8">Deixe a amortização base vazia para usar saldo ÷ prazo automaticamente. Taxa 0,6944% a.m. = 0.006944.</div>'
+    + '</div>'
+    + '<div class="form-acoes">'
+    + '<button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>'
+    + '<button class="btn-confirmar" id="btnCt" onclick="salvarContrato()">Salvar contrato</button>'
+    + '</div>';
+  abrirModal();
+}
+
+async function salvarContrato(){
+  const c = {
+    devedor: document.getElementById('ct-devedor').value.trim(),
+    saldoInicial: parseFloat(document.getElementById('ct-saldo').value),
+    prazo: parseInt(document.getElementById('ct-prazo').value),
+    taxaMensal: parseFloat(document.getElementById('ct-taxa').value),
+    amortizacaoBase: document.getElementById('ct-amort').value ? parseFloat(document.getElementById('ct-amort').value) : '',
+    dataPrimeira: document.getElementById('ct-dataprim').value.trim()
+  };
+  if (!c.saldoInicial || !c.prazo || !c.taxaMensal || !c.dataPrimeira){
+    alert('Preencha saldo inicial, prazo, taxa e data da 1ª parcela.'); return;
+  }
+  const btn = document.getElementById('btnCt');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  const r = await chamar(Object.assign({acao:'salvar_contrato'}, c));
+  if (r.ok){ toast('Contrato salvo'); fecharModal(); await carregarDados(); }
+  else { btn.disabled=false; btn.textContent='Salvar contrato'; toast('Erro: '+(r.erro||'falha'), true); }
+}
+
+// === UTIL ===
+function paraInputDate(s){
+  if (!s) return '';
+  const p = String(s).split('/');
+  if (p.length !== 3) return '';
+  return p[2] + '-' + p[1].padStart(2,'0') + '-' + p[0].padStart(2,'0');
+}
+
+// === MODAL / TOAST ===
+function abrirModal(){ document.getElementById("modalBg").classList.remove("off"); }
+function fecharModal(){ document.getElementById("modalBg").classList.add("off"); }
+document.getElementById("modalBg").addEventListener("click", function(e){ if (e.target === this) fecharModal(); });
+
+let toastTimer = null;
+function toast(msg, err){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (err ? " err" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.className = "toast" + (err ? " err" : ""); }, 2600);
+}
+
+document.getElementById("dt").textContent = new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"})
+  + " · " + new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+</script>
+</body>
+</html>
