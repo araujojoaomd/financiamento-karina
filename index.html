@@ -21,7 +21,30 @@ body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-heigh
 .pnl-header-right .usr{font-size:10.5px;color:#AACCE8;margin-top:4px;display:flex;align-items:center;gap:8px}
 .btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 9px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .btn-sair:hover{background:rgba(255,255,255,.18)}
+.tabs{background:#16294a;display:flex;justify-content:center;gap:4px;padding:0 28px}
+.tab{background:none;border:none;color:#AACCE8;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:12px 22px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.3px}
+.tab:hover{color:#fff}
+.tab.ativa{color:#fff;border-bottom-color:#7BAFD4}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 28px;background:#EEF4FB;border-bottom:1px solid #E2EAF4;max-width:1500px;margin:0 auto;width:100%}
+.btn-aporte{background:#6B21A8;color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.btn-aporte:hover{background:#581C87}
+.extra-tag.clic{cursor:pointer;border:1px solid #E9D5FF}
+.extra-tag.clic:hover{background:#E9D5FF}
+.sim-card{max-width:760px;margin:24px auto;background:#fff;border:1px solid #E2EAF4;border-radius:16px;padding:24px 28px;box-shadow:0 2px 12px rgba(31,56,100,.06)}
+.sim-card h2{font-size:16px;font-weight:700;color:#1F3864;margin-bottom:4px}
+.sim-card .desc{font-size:12.5px;color:#64748B;margin-bottom:18px;line-height:1.5}
+.sim-cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.sim-box{border:1px solid #E2EAF4;border-radius:12px;padding:14px 16px}
+.sim-box.antes{background:#F8FAFC}
+.sim-box.depois{background:#F0FDF4;border-color:#BBF7D0}
+.sim-box .bt{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#64748B;margin-bottom:8px}
+.sim-box.depois .bt{color:#15803D}
+.sim-box .lin{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;line-height:1.5}
+.sim-box .lin b{font-family:'DM Mono',monospace}
+.sim-ganho{margin-top:16px;padding:14px 16px;border-radius:12px;background:#1F3864;color:#fff;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sim-ganho .g{text-align:center}
+.sim-ganho .gv{font-size:20px;font-weight:700;line-height:1.1}
+.sim-ganho .gl{font-size:10.5px;color:#AACCE8;margin-top:3px}
 .card{background:#fff;border:0.5px solid #E2EAF4;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;min-height:74px}
 .card .num{font-size:20px;font-weight:700;line-height:1.1}
 .card .leg{font-size:10.5px;color:#64748B;font-weight:500;margin-top:4px;line-height:1.3}
@@ -155,6 +178,12 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   </div>
 </div>
 
+<div class="tabs">
+  <button class="tab ativa" id="tab-controle" onclick="trocarAba('controle')">📋 Controle</button>
+  <button class="tab" id="tab-simulacao" onclick="trocarAba('simulacao')">⚡ Simulação</button>
+</div>
+
+<div id="telaControle">
 <div class="cards">
   <div class="card"><div class="num c-saldo" id="c-saldo">—</div><div class="leg">Saldo devedor atual</div><div class="sub" id="c-saldo-sub"></div></div>
   <div class="card"><div class="num c-amort" id="c-amort">—</div><div class="leg">Total amortizado</div><div class="sub" id="c-amort-sub"></div></div>
@@ -163,33 +192,17 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   <div class="card"><div class="num c-quit" id="c-quit">—</div><div class="leg">Previsão de quitação</div><div class="sub" id="c-quit-sub"></div></div>
 </div>
 
-<div class="sim">
-  <div class="sim-title">⚡ Simular amortização extra</div>
-  <div class="sim-row">
-    <div class="sim-field">
-      <label>Na parcela nº</label>
-      <input type="number" id="sim-parc" min="1" placeholder="ex: 12">
-    </div>
-    <div class="sim-field">
-      <label>Valor extra (R$)</label>
-      <input type="number" id="sim-valor" min="0" step="0.01" placeholder="ex: 5000">
-    </div>
-    <button class="btn-sim" onclick="simular()">Simular</button>
-    <button class="btn-confirmar" id="btnConfirmarExtra" onclick="confirmarExtra()" disabled>Confirmar e registrar</button>
-  </div>
-  <div class="sim-result" id="sim-result"></div>
-</div>
-
 <div class="filtros">
   <select id="fStatus" onchange="filtrar(this.value)">
     <option value="todas">Todas as parcelas</option>
     <option value="pendentes">Pendentes</option>
     <option value="pagas">Pagas</option>
     <option value="atraso">Em atraso</option>
-    <option value="extras">Com amortização extra</option>
+    <option value="extras">Com aporte extra</option>
   </select>
   <div class="sep"></div>
   <span class="cont-label" id="contLabel"></span>
+  <button class="btn-aporte" onclick="abrirAporte()">+ Aporte extra</button>
   <button class="btn-atualizar" onclick="carregarDados()">↻ Atualizar</button>
   <button class="btn-atualizar" onclick="abrirContrato()">⚙ Contrato</button>
 </div>
@@ -203,7 +216,7 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
       <th class="td-money num-cell">Amortização</th>
       <th class="td-money num-cell">Juros</th>
       <th class="td-money num-cell">Parcela</th>
-      <th class="td-extra num-cell">Extra</th>
+      <th class="td-extra num-cell">Aporte</th>
       <th class="td-money num-cell">Saldo após</th>
       <th class="td-status">Status</th>
       <th class="td-acoes"></th>
@@ -212,6 +225,27 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   </table>
   <div class="vazio" id="vazio">Nenhuma parcela encontrada.</div>
 </div>
+</div>
+
+<div id="telaSimulacao" style="display:none">
+  <div class="sim-card">
+    <h2>⚡ Simulador de aporte extra</h2>
+    <div class="desc">Veja — <b>sem gravar nada</b> — como ficaria o financiamento se você fizesse um aporte extra. A simulação parte da situação atual (incluindo aportes já registrados).</div>
+    <div class="sim-row">
+      <div class="sim-field">
+        <label>Aporte na parcela nº</label>
+        <input type="number" id="sim-parc" min="1" placeholder="ex: 12">
+      </div>
+      <div class="sim-field">
+        <label>Valor do aporte (R$)</label>
+        <input type="number" id="sim-valor" min="0" step="0.01" placeholder="ex: 5000">
+      </div>
+      <button class="btn-confirmar" onclick="simular()">Simular</button>
+    </div>
+    <div id="sim-saida"></div>
+  </div>
+</div>
+
 <div class="rodape">Controle pessoal de financiamento — uso privado</div>
 </div>
 
@@ -235,10 +269,9 @@ let idToken = null;
 let userEmail = null;
 let CONTRATO = null;
 let PAGAMENTOS = [];   // [{nParcela, dataPagamento, valorPago, linkComprovante}]
-let EXTRAS = [];       // [{nParcela, valor, obs, linkComprovante}]
+let EXTRAS = [];       // [{nParcela, valor, data, obs, linkComprovante}]
 let CRONOGRAMA = [];   // calculado
 let F = 'todas';
-let extraPendente = null; // {nParcela, valor} aguardando confirmação
 
 // === LOGIN ===
 function aguardarGSI(cb){
@@ -483,8 +516,7 @@ function render(){
 
     let extraCell = '';
     if (l.extra > 0){
-      const exComp = extrasDe(l.n).find(e => e.linkComprovante);
-      extraCell = '<span class="extra-tag">+'+fmtBRLc(l.extra)+'</span>';
+      extraCell = '<span class="extra-tag clic" onclick=\'abrirAporte('+l.n+')\' title="Ver / desfazer aporte">+'+fmtBRLc(l.extra)+'</span>';
     } else extraCell = '<span style="color:#CBD5E1">—</span>';
 
     let statusCell = badge;
@@ -516,25 +548,31 @@ function render(){
 
 function filtrar(v){ F = v; render(); }
 
-// === SIMULAÇÃO ===
+// === ABAS ===
+function trocarAba(aba){
+  const ctrl = aba === 'controle';
+  document.getElementById('telaControle').style.display = ctrl ? '' : 'none';
+  document.getElementById('telaSimulacao').style.display = ctrl ? 'none' : '';
+  document.getElementById('tab-controle').classList.toggle('ativa', ctrl);
+  document.getElementById('tab-simulacao').classList.toggle('ativa', !ctrl);
+}
+
+// === SIMULAÇÃO (apenas hipótese, não grava) ===
 function simular(){
   const n = parseInt(document.getElementById('sim-parc').value);
   const v = parseFloat(document.getElementById('sim-valor').value);
-  const box = document.getElementById('sim-result');
-  extraPendente = null;
-  document.getElementById('btnConfirmarExtra').disabled = true;
-  if (!n || n < 1){ box.className='sim-result warn show'; box.innerHTML='Informe um número de parcela válido.'; return; }
-  if (!v || v <= 0){ box.className='sim-result warn show'; box.innerHTML='Informe um valor de amortização extra válido.'; return; }
+  const saida = document.getElementById('sim-saida');
+  const aviso = function(msg){ saida.innerHTML = '<div class="sim-result warn show" style="margin-top:16px">'+msg+'</div>'; };
+  if (!n || n < 1){ aviso('Informe um número de parcela válido.'); return; }
+  if (!v || v <= 0){ aviso('Informe um valor de aporte válido.'); return; }
 
   const base = gerarCronograma(CONTRATO, mapaExtras(EXTRAS));
-  const extrasSim = EXTRAS.slice(); extrasSim.push({nParcela:n, valor:v});
-  const novo = gerarCronograma(CONTRATO, mapaExtras(extrasSim));
-
   if (n > base.length){
-    box.className='sim-result warn show';
-    box.innerHTML='Na simulação o financiamento já estaria quitado antes da parcela '+n+' (prazo atual: '+base.length+' parcelas).';
+    aviso('Na simulação o financiamento já estaria quitado antes da parcela '+n+' (prazo atual: '+base.length+' parcelas).');
     return;
   }
+  const extrasSim = EXTRAS.slice(); extrasSim.push({nParcela:n, valor:v});
+  const novo = gerarCronograma(CONTRATO, mapaExtras(extrasSim));
 
   const jurosBase = base.reduce((s,l)=>s+l.juros,0);
   const jurosNovo = novo.reduce((s,l)=>s+l.juros,0);
@@ -543,39 +581,113 @@ function simular(){
   const quitBase = base[base.length-1].data;
   const quitNovo = novo[novo.length-1].data;
 
-  box.className='sim-result show';
-  box.innerHTML =
-      'Amortizando <b>'+fmtBRL(v)+'</b> extra na parcela <b>'+n+'</b>:<br>'
-    + '• Prazo: de <b>'+base.length+'</b> para <b>'+novo.length+'</b> parcelas '
-    + (mesesReduz>0 ? '(<b>−'+mesesReduz+' meses</b>)' : '(sem mudança de prazo)') + '<br>'
-    + '• Economia de juros: <b>'+fmtBRL(economia)+'</b><br>'
-    + '• Quitação: de <b>'+fmtMesAno(quitBase)+'</b> para <b>'+fmtMesAno(quitNovo)+'</b>';
-  extraPendente = {nParcela:n, valor:v};
-  document.getElementById('btnConfirmarExtra').disabled = false;
+  // valor da parcela logo após o aporte (antes x depois)
+  const segN = n + 1;
+  const pBaseSeg = base.find(l => l.n === segN);
+  const pNovoSeg = novo.find(l => l.n === segN);
+  const parcAntes = pBaseSeg ? pBaseSeg.parcela : (base[base.length-1].parcela);
+  const parcDepois = pNovoSeg ? pNovoSeg.parcela : (novo.length ? novo[novo.length-1].parcela : 0);
+
+  saida.innerHTML =
+      '<div class="sim-cmp">'
+    +   '<div class="sim-box antes"><div class="bt">Situação atual</div>'
+    +     '<div class="lin"><span>Prazo restante</span><b>'+base.length+' parc.</b></div>'
+    +     '<div class="lin"><span>Parcela nº '+segN+'</span><b>'+fmtBRL(parcAntes)+'</b></div>'
+    +     '<div class="lin"><span>Total de juros</span><b>'+fmtBRL(jurosBase)+'</b></div>'
+    +     '<div class="lin"><span>Quitação</span><b>'+fmtMesAno(quitBase)+'</b></div>'
+    +   '</div>'
+    +   '<div class="sim-box depois"><div class="bt">Com aporte de '+fmtBRL(v)+' na parcela '+n+'</div>'
+    +     '<div class="lin"><span>Prazo restante</span><b>'+novo.length+' parc.</b></div>'
+    +     '<div class="lin"><span>Parcela nº '+segN+'</span><b>'+fmtBRL(parcDepois)+'</b></div>'
+    +     '<div class="lin"><span>Total de juros</span><b>'+fmtBRL(jurosNovo)+'</b></div>'
+    +     '<div class="lin"><span>Quitação</span><b>'+fmtMesAno(quitNovo)+'</b></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="sim-ganho">'
+    +   '<div class="g"><div class="gv">−'+mesesReduz+'</div><div class="gl">meses a menos no prazo</div></div>'
+    +   '<div class="g"><div class="gv">'+fmtBRL(economia)+'</div><div class="gl">de economia em juros</div></div>'
+    + '</div>'
+    + '<div style="font-size:11px;color:#94A3B8;margin-top:12px;text-align:center">Simulação não grava nada. Para registrar de verdade, use <b>+ Aporte extra</b> na aba Controle.</div>';
 }
 
-async function confirmarExtra(){
-  if (!extraPendente) return;
-  const btn = document.getElementById('btnConfirmarExtra');
-  btn.disabled = true; btn.textContent = 'Registrando…';
-  const r = await chamar({
-    acao:'adicionar_extra',
-    nParcela: extraPendente.nParcela,
-    valor: extraPendente.valor,
-    obs: ''
-  });
-  btn.textContent = 'Confirmar e registrar';
-  if (r.ok){
-    toast('Amortização extra registrada');
-    document.getElementById('sim-result').className='sim-result';
-    document.getElementById('sim-parc').value='';
-    document.getElementById('sim-valor').value='';
-    extraPendente = null;
-    await carregarDados();
-  } else {
-    btn.disabled=false;
-    toast('Erro: '+(r.erro||'falha'), true);
+// === MODAL DE APORTE EXTRA ===
+function abrirAporte(n){
+  const prox = proximaParcelaN();
+  const alvo = n || prox || 1;
+  const l = CRONOGRAMA.find(x => x.n === alvo);
+  const exs = extrasDe(alvo);
+  document.getElementById('modalTitulo').textContent = 'Aporte extra' + (l ? ' — parcela ' + alvo + ' (' + fmtData(l.data) + ')' : '');
+
+  let lista = '';
+  if (exs.length){
+    lista = '<div class="modal-section"><div class="modal-section-title">Aportes já registrados nesta parcela</div>';
+    exs.forEach(function(e, i){
+      lista += '<div class="obs-item" style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
+        + '<div><b style="font-family:DM Mono">'+fmtBRL(e.valor)+'</b>'
+        + (e.data ? ' <span style="color:#64748B;font-size:11px">· '+e.data+'</span>' : '')
+        + (e.linkComprovante ? ' <a class="comp-link" href="'+e.linkComprovante+'" target="_blank">📎 comprovante</a>' : '')
+        + '</div>'
+        + '<button class="btn-perigo" style="margin:0;padding:4px 12px;font-size:12px" onclick="desfazerAporte('+alvo+','+i+')">Desfazer</button>'
+        + '</div>';
+    });
+    lista += '</div>';
   }
+
+  const hojeInput = paraInputDate(new Date().toLocaleDateString('pt-BR'));
+  document.getElementById('modalCorpo').innerHTML =
+      lista
+    + '<div class="modal-section"><div class="modal-section-title">Novo aporte</div>'
+    + '<div class="form-grid">'
+      + '<div class="form-field"><label>Na parcela nº</label><input type="number" id="ap-parc" min="1" value="'+alvo+'"></div>'
+      + '<div class="form-field"><label>Valor do aporte (R$)</label><input type="number" id="ap-valor" step="0.01" placeholder="ex: 5000"></div>'
+    + '</div>'
+    + '<div class="form-grid full"><div class="form-field"><label>Data do aporte</label><input type="date" id="ap-data" value="'+hojeInput+'"></div></div>'
+    + '</div>'
+    + '<div class="modal-section"><div class="modal-section-title">Comprovante</div>'
+    + '<input type="file" id="ap-file" style="display:none" onchange="document.getElementById(\'ap-file-nome\').textContent=this.files[0]?this.files[0].name:\'\'">'
+    + '<button class="btn-icon" onclick="document.getElementById(\'ap-file\').click()">📤 Selecionar comprovante</button>'
+    + '<span id="ap-file-nome" style="font-size:11.5px;color:#64748B;margin-left:8px"></span>'
+    + '<div style="font-size:10.5px;color:#94A3B8;margin-top:6px">Opcional. PDF, imagem, etc. Máx. ~25 MB.</div>'
+    + '</div>'
+    + '<div class="form-acoes">'
+    + '<button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>'
+    + '<button class="btn-confirmar" id="btnAporte" onclick="salvarAporte()">Registrar aporte</button>'
+    + '</div>';
+  abrirModal();
+}
+
+async function salvarAporte(){
+  const n = parseInt(document.getElementById('ap-parc').value);
+  const valor = parseFloat(document.getElementById('ap-valor').value);
+  const dataRaw = document.getElementById('ap-data').value;
+  if (!n || n < 1){ alert('Informe a parcela do aporte.'); return; }
+  if (isNaN(valor) || valor <= 0){ alert('Informe um valor de aporte válido.'); return; }
+  const dataFmt = dataRaw ? dataRaw.split('-').reverse().join('/') : '';
+  const btn = document.getElementById('btnAporte');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+
+  const r = await chamar({ acao:'adicionar_extra', nParcela:n, valor:valor, data:dataFmt, obs:'' });
+  if (!r.ok){
+    btn.disabled=false; btn.textContent='Registrar aporte';
+    toast('Erro: '+(r.erro||'falha'), true);
+    return;
+  }
+  const file = document.getElementById('ap-file').files[0];
+  if (file){
+    btn.textContent = 'Enviando comprovante…';
+    const ok = await enviarComprovante('extra', n, file);
+    if (!ok) toast('Aporte salvo, mas falhou o comprovante', true);
+  }
+  toast('Aporte extra registrado');
+  fecharModal();
+  await carregarDados();
+}
+
+async function desfazerAporte(n, indice){
+  if (!confirm('Desfazer este aporte extra da parcela '+n+'?')) return;
+  const r = await chamar({ acao:'remover_extra', nParcela:n, indice:indice });
+  if (r.ok){ toast('Aporte desfeito'); fecharModal(); await carregarDados(); }
+  else { toast('Erro: '+(r.erro||'falha'), true); }
 }
 
 // === MODAL DE PAGAMENTO ===
