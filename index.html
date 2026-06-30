@@ -26,7 +26,7 @@ body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-heigh
 .card .num{font-size:20px;font-weight:700;line-height:1.1}
 .card .leg{font-size:10.5px;color:#64748B;font-weight:500;margin-top:4px;line-height:1.3}
 .card .sub{font-size:10px;color:#94A3B8;margin-top:2px}
-.c-saldo{color:#1F3864}.c-amort{color:#16A34A}.c-juros{color:#B45309}.c-parc{color:#2E5FA3}.c-quit{color:#6B21A8}
+.c-saldo{color:#1F3864}.c-amort{color:#16A34A}.c-venc{color:#DC2626}.c-parc{color:#2E5FA3}.c-quit{color:#6B21A8}
 .sim{max-width:1500px;margin:0 auto;width:100%;padding:14px 28px;background:#fff;border-bottom:1px solid #E2EAF4}
 .sim-title{font-size:11px;font-weight:600;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .sim-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
@@ -158,7 +158,7 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
 <div class="cards">
   <div class="card"><div class="num c-saldo" id="c-saldo">—</div><div class="leg">Saldo devedor atual</div><div class="sub" id="c-saldo-sub"></div></div>
   <div class="card"><div class="num c-amort" id="c-amort">—</div><div class="leg">Total amortizado</div><div class="sub" id="c-amort-sub"></div></div>
-  <div class="card"><div class="num c-juros" id="c-juros">—</div><div class="leg">Juros pagos</div><div class="sub" id="c-juros-sub"></div></div>
+  <div class="card"><div class="num c-venc" id="c-venc">—</div><div class="leg">Total vencido</div><div class="sub" id="c-venc-sub"></div></div>
   <div class="card"><div class="num c-parc" id="c-parc">—</div><div class="leg">Parcelas pagas</div><div class="sub" id="c-parc-sub"></div></div>
   <div class="card"><div class="num c-quit" id="c-quit">—</div><div class="leg">Previsão de quitação</div><div class="sub" id="c-quit-sub"></div></div>
 </div>
@@ -420,26 +420,32 @@ function proximaParcelaN(){
 // === RENDER ===
 function render(){
   const prox = proximaParcelaN();
+  const hoje0 = new Date(); hoje0.setHours(0,0,0,0);
   // ---- resumo ----
+  const saldoInicial = Number(CONTRATO.saldoInicial)||0;
   const pagos = CRONOGRAMA.filter(l => pagamentoDe(l.n));
-  const amortPago = pagos.reduce((s,l)=>s + l.amort + l.extra, 0);
-  const jurosPago = pagos.reduce((s,l)=>s + l.juros, 0);
-  // saldo atual = saldo após a última parcela paga (ou saldo inicial se nada pago)
-  let saldoAtual = Number(CONTRATO.saldoInicial)||0;
-  if (pagos.length){
-    const ultPagoN = Math.max(...pagos.map(l=>l.n));
-    const ln = CRONOGRAMA.find(l=>l.n===ultPagoN);
-    if (ln) saldoAtual = ln.saldoFim;
-  }
+  // amortização regular das parcelas pagas + TODAS as amortizações extras registradas
+  const amortRegular = pagos.reduce((s,l)=>s + l.amort, 0);
+  const extrasAplicadas = CRONOGRAMA.reduce((s,l)=>s + l.extra, 0);
+  const amortPago = amortRegular + extrasAplicadas;
+  // saldo atual = inicial − amortizado (coerente com o total amortizado)
+  let saldoAtual = saldoInicial - amortPago;
+  if (saldoAtual < 0.005) saldoAtual = 0;
+  // total vencido = soma das parcelas vencidas e ainda não pagas
+  const vencidas = CRONOGRAMA.filter(l => !pagamentoDe(l.n) && l.data < hoje0);
+  const totalVencido = vencidas.reduce((s,l)=>s + l.parcela, 0);
   const totalParc = CRONOGRAMA.length;
   const ultima = CRONOGRAMA[CRONOGRAMA.length-1];
   document.getElementById('c-saldo').textContent = fmtBRL(saldoAtual);
-  document.getElementById('c-saldo-sub').textContent = 'de ' + fmtBRL(CONTRATO.saldoInicial) + ' inicial';
+  document.getElementById('c-saldo-sub').textContent = 'de ' + fmtBRL(saldoInicial) + ' inicial';
   document.getElementById('c-amort').textContent = fmtBRL(amortPago);
-  const pctAmort = (Number(CONTRATO.saldoInicial)>0) ? (amortPago/Number(CONTRATO.saldoInicial)*100) : 0;
-  document.getElementById('c-amort-sub').textContent = pctAmort.toFixed(1) + '% do principal';
-  document.getElementById('c-juros').textContent = fmtBRL(jurosPago);
-  document.getElementById('c-juros-sub').textContent = 'pagos até agora';
+  const pctAmort = (saldoInicial>0) ? (amortPago/saldoInicial*100) : 0;
+  document.getElementById('c-amort-sub').textContent = pctAmort.toFixed(1) + '% do principal'
+    + (extrasAplicadas > 0 ? ' (inclui extras)' : '');
+  document.getElementById('c-venc').textContent = fmtBRL(totalVencido);
+  document.getElementById('c-venc-sub').textContent = vencidas.length
+    ? vencidas.length + ' parcela(s) em atraso'
+    : 'nada vencido';
   document.getElementById('c-parc').textContent = pagos.length + ' / ' + totalParc;
   document.getElementById('c-parc-sub').textContent = (totalParc - pagos.length) + ' restantes';
   document.getElementById('c-quit').textContent = ultima ? fmtMesAno(ultima.data) : '—';
