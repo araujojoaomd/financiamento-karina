@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Financiamento — Karina</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-height:100vh}
@@ -146,7 +145,11 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
 .login-supra{font-size:10px;letter-spacing:2px;color:#7BAFD4;text-transform:uppercase;margin-bottom:6px;font-weight:600}
 .login-titulo{font-size:20px;font-weight:700;color:#1F3864;margin-bottom:6px}
 .login-sub{font-size:13px;color:#64748B;margin-bottom:24px;line-height:1.5}
-#g_id_signin{display:flex;justify-content:center;margin-bottom:8px;min-height:44px}
+.login-input{width:100%;font-size:15px;padding:12px 16px;border-radius:12px;border:1.5px solid #E2EAF4;font-family:'DM Sans',sans-serif;color:#1A2740;text-align:center;letter-spacing:1px;margin-bottom:12px}
+.login-input:focus{outline:none;border-color:#2E5FA3}
+.login-btn{width:100%;background:#1F3864;color:#fff;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.login-btn:hover{background:#16294a}
+.login-btn:disabled{opacity:.6;cursor:default}
 .login-erro{background:#FEF2F2;color:#B91C1C;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:16px;line-height:1.4;text-align:left}
 .login-loading{font-size:12px;color:#64748B;margin-top:12px}
 .toast{position:fixed;bottom:24px;right:24px;background:#1F3864;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:600;opacity:0;transform:translateY(10px);transition:all .25s}
@@ -170,9 +173,10 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   <div class="login-card">
     <div class="login-supra">Controle Financeiro Pessoal</div>
     <div class="login-titulo">Financiamento — Karina</div>
-    <div class="login-sub">Entre com a conta Google autorizada.</div>
-    <div id="g_id_signin"></div>
-    <div class="login-loading" id="loginLoading" style="display:none">Verificando acesso…</div>
+    <div class="login-sub">Digite a senha de acesso.</div>
+    <input type="password" id="loginSenha" class="login-input" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="login-btn" id="loginBtn" onclick="entrar()">Entrar</button>
+    <div class="login-loading" id="loginLoading" style="display:none">Verificando…</div>
     <div class="login-erro" id="loginErro" style="display:none"></div>
   </div>
 </div>
@@ -189,7 +193,7 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
     <div class="pnl-header-right">
       <div class="lbl">Atualizado em</div>
       <div class="dt" id="dt">—</div>
-      <div class="usr"><span id="userEmail"></span><button class="btn-sair" onclick="sair()">Sair</button></div>
+      <div class="usr"><span>Acesso liberado</span><button class="btn-sair" onclick="sair()">Sair</button></div>
     </div>
   </div>
 </div>
@@ -220,7 +224,7 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   <span class="cont-label" id="contLabel"></span>
   <button class="btn-aporte" onclick="abrirAporte()">+ Aporte extra</button>
   <button class="btn-atualizar" onclick="carregarDados()">↻ Atualizar</button>
-  <button class="btn-atualizar" onclick="abrirContrato()">⚙ Contrato</button>
+  <button class="btn-atualizar" onclick="abrirContrato()">📄 Contrato</button>
 </div>
 
 <div class="tabela-wrap">
@@ -286,57 +290,46 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
 <div class="toast" id="toast"></div>
 
 <script>
-const CLIENT_ID = '864961214405-bipsb4fk0sr0sgi8m9ei81u87rhjshc4.apps.googleusercontent.com';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw5nGV_-CnGQRsARRcg3IlXDubibSYA8wXKHFc7rjxnEBLURIAXotf4VQrm2a11yLU60w/exec';
+const LS_SENHA = 'fkarina_senha';
 
-let idToken = null;
-let userEmail = null;
+let SENHA = null;
 let CONTRATO = null;
 let PAGAMENTOS = [];   // [{nParcela, dataPagamento, valorPago, linkComprovante}]
 let EXTRAS = [];       // [{nParcela, valor, data, obs, linkComprovante}]
 let CRONOGRAMA = [];   // calculado
 let F = 'todas';
 
-// === LOGIN ===
-function aguardarGSI(cb){
-  if (window.google && window.google.accounts && window.google.accounts.id) return cb();
-  setTimeout(function(){ aguardarGSI(cb); }, 100);
-}
+// === LOGIN POR SENHA ===
 window.addEventListener('load', function(){
-  aguardarGSI(function(){
-    google.accounts.id.initialize({
-      client_id: CLIENT_ID,
-      callback: aposLogin,
-      auto_select: true,
-      cancel_on_tap_outside: false
-    });
-    google.accounts.id.renderButton(
-      document.getElementById('g_id_signin'),
-      {theme:'filled_blue', size:'large', text:'signin_with', shape:'pill', width:300}
-    );
-    google.accounts.id.prompt();
-  });
+  const salva = localStorage.getItem(LS_SENHA);
+  if (salva){ tentarEntrar(salva); }
 });
 
-async function aposLogin(response){
-  idToken = response.credential;
-  try {
-    const payload = JSON.parse(atob(idToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-    userEmail = payload.email;
-  } catch(e) { userEmail = '—'; }
+function entrar(){
+  const s = document.getElementById('loginSenha').value;
+  if (!s){ mostrarErroLogin('Digite a senha.'); return; }
+  tentarEntrar(s);
+}
+
+async function tentarEntrar(s){
   document.getElementById('loginErro').style.display = 'none';
   document.getElementById('loginLoading').style.display = '';
+  const btn = document.getElementById('loginBtn');
+  if (btn) btn.disabled = true;
+  SENHA = s;
   const r = await chamar({acao:'ler'});
   document.getElementById('loginLoading').style.display = 'none';
+  if (btn) btn.disabled = false;
   if (r.ok) {
+    localStorage.setItem(LS_SENHA, s);
     document.getElementById('loginTela').style.display = 'none';
     document.getElementById('appConteudo').style.display = '';
-    document.getElementById('userEmail').textContent = userEmail;
     aplicarDados(r);
-  } else if (r.erro === 'sem_acesso') {
-    mostrarErroLogin('A conta ' + userEmail + ' não está autorizada. Verifique a allowlist no Apps Script.');
-  } else if (r.erro === 'token_invalido' || r.erro === 'sem_token') {
-    mostrarErroLogin('Sessão inválida. Tente entrar novamente.');
+  } else if (r.erro === 'senha_invalida') {
+    SENHA = null;
+    localStorage.removeItem(LS_SENHA);
+    mostrarErroLogin('Senha incorreta.');
   } else {
     mostrarErroLogin('Erro: ' + (r.erro || 'desconhecido'));
   }
@@ -349,13 +342,13 @@ function mostrarErroLogin(msg){
 }
 
 function sair(){
-  google.accounts.id.disableAutoSelect();
-  idToken = null; userEmail = null;
+  SENHA = null;
+  localStorage.removeItem(LS_SENHA);
   location.reload();
 }
 
 async function chamar(payload){
-  payload.idToken = idToken;
+  payload.senha = SENHA;
   try {
     const r = await fetch(API_URL, {
       method: 'POST',
@@ -363,9 +356,9 @@ async function chamar(payload){
       body: JSON.stringify(payload)
     });
     const dados = await r.json();
-    if (!dados.ok && (dados.erro === 'token_invalido' || dados.erro === 'sem_token')) {
-      toast('Sessão expirada. Reconectando…', true);
-      setTimeout(function(){ location.reload(); }, 800);
+    if (!dados.ok && dados.erro === 'senha_invalida' && document.getElementById('appConteudo').style.display !== 'none') {
+      toast('Sessão expirada. Entre novamente.', true);
+      setTimeout(function(){ sair(); }, 900);
     }
     return dados;
   } catch(e){
@@ -383,7 +376,7 @@ function aplicarDados(r){
 }
 
 async function carregarDados(){
-  if (!idToken) return;
+  if (!SENHA) return;
   document.getElementById("loading").style.display = "block";
   document.getElementById("tab").style.display = "none";
   document.getElementById("vazio").style.display = "none";
@@ -844,47 +837,24 @@ function enviarComprovante(tipo, n, file){
 // === CONTRATO ===
 function abrirContrato(){
   const c = CONTRATO || {};
-  document.getElementById('modalTitulo').textContent = 'Parâmetros do contrato';
+  const saldo = Number(c.saldoInicial)||0;
+  const prazo = Number(c.prazo)||0;
+  const taxa = Number(c.taxaMensal)||0;
+  const amortBase = Number(c.amortizacaoBase) || (prazo ? saldo/prazo : 0);
+  document.getElementById('modalTitulo').textContent = 'Condições do contrato';
+  const lin = function(rot, val){ return '<div class="lin"><span>'+rot+'</span><b>'+val+'</b></div>'; };
   document.getElementById('modalCorpo').innerHTML =
-      '<div class="modal-section">'
-    + '<div class="form-grid full"><div class="form-field"><label>Devedor</label>'
-    + '<input type="text" id="ct-devedor" value="'+(c.devedor||'').replace(/"/g,'&quot;')+'"></div></div>'
-    + '<div class="form-grid">'
-      + '<div class="form-field"><label>Saldo inicial (R$)</label><input type="number" step="0.01" id="ct-saldo" value="'+(c.saldoInicial||'')+'"></div>'
-      + '<div class="form-field"><label>Prazo (meses)</label><input type="number" id="ct-prazo" value="'+(c.prazo||'')+'"></div>'
+      '<div class="resumo-parc">'
+    +   lin('Devedor', c.devedor || '—')
+    +   lin('Saldo inicial', fmtBRL(saldo))
+    +   lin('Prazo', prazo + ' meses')
+    +   lin('Taxa mensal', (taxa*100).toLocaleString('pt-BR',{minimumFractionDigits:4,maximumFractionDigits:4}) + '%')
+    +   lin('Amortização base', fmtBRL(amortBase) + ' / mês')
+    +   lin('1ª parcela', c.dataPrimeira || '—')
     + '</div>'
-    + '<div class="form-grid">'
-      + '<div class="form-field"><label>Taxa mensal (ex: 0.006944)</label><input type="number" step="0.0000001" id="ct-taxa" value="'+(c.taxaMensal||'')+'"></div>'
-      + '<div class="form-field"><label>Amortização base (R$)</label><input type="number" step="0.01" id="ct-amort" value="'+(c.amortizacaoBase||'')+'"></div>'
-    + '</div>'
-    + '<div class="form-grid full"><div class="form-field"><label>Data da 1ª parcela (dd/mm/aaaa)</label>'
-    + '<input type="text" id="ct-dataprim" value="'+(c.dataPrimeira||'')+'" placeholder="04/03/2026"></div></div>'
-    + '<div style="font-size:11px;color:#94A3B8">Deixe a amortização base vazia para usar saldo ÷ prazo automaticamente. Taxa 0,6944% a.m. = 0.006944.</div>'
-    + '</div>'
-    + '<div class="form-acoes">'
-    + '<button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>'
-    + '<button class="btn-confirmar" id="btnCt" onclick="salvarContrato()">Salvar contrato</button>'
-    + '</div>';
+    + '<div style="font-size:11.5px;color:#94A3B8;line-height:1.5">🔒 As condições do contrato são fixas e não podem ser alteradas por aqui. Elas ficam registradas na planilha.</div>'
+    + '<div class="form-acoes"><button class="btn-confirmar" onclick="fecharModal()">Fechar</button></div>';
   abrirModal();
-}
-
-async function salvarContrato(){
-  const c = {
-    devedor: document.getElementById('ct-devedor').value.trim(),
-    saldoInicial: parseFloat(document.getElementById('ct-saldo').value),
-    prazo: parseInt(document.getElementById('ct-prazo').value),
-    taxaMensal: parseFloat(document.getElementById('ct-taxa').value),
-    amortizacaoBase: document.getElementById('ct-amort').value ? parseFloat(document.getElementById('ct-amort').value) : '',
-    dataPrimeira: document.getElementById('ct-dataprim').value.trim()
-  };
-  if (!c.saldoInicial || !c.prazo || !c.taxaMensal || !c.dataPrimeira){
-    alert('Preencha saldo inicial, prazo, taxa e data da 1ª parcela.'); return;
-  }
-  const btn = document.getElementById('btnCt');
-  btn.disabled = true; btn.textContent = 'Salvando…';
-  const r = await chamar(Object.assign({acao:'salvar_contrato'}, c));
-  if (r.ok){ toast('Contrato salvo'); fecharModal(); await carregarDados(); }
-  else { btn.disabled=false; btn.textContent='Salvar contrato'; toast('Erro: '+(r.erro||'falha'), true); }
 }
 
 // === UTIL ===
