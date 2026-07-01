@@ -21,15 +21,21 @@ body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-heigh
 .pnl-header-right .usr{font-size:10.5px;color:#AACCE8;margin-top:4px;display:flex;align-items:center;gap:8px}
 .btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 9px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif}
 .btn-sair:hover{background:rgba(255,255,255,.18)}
-.tabs{background:#16294a;display:flex;justify-content:center;gap:4px;padding:0 28px}
-.tab{background:none;border:none;color:#AACCE8;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:12px 22px;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.3px}
-.tab:hover{color:#fff}
-.tab.ativa{color:#fff;border-bottom-color:#7BAFD4}
+.tabs{background:#16294a;display:flex;justify-content:center;gap:10px;padding:11px 28px}
+.tab{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#C7D8EC;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;padding:9px 28px;cursor:pointer;border-radius:24px;transition:all .15s;letter-spacing:.3px}
+.tab:hover{background:rgba(255,255,255,.16);color:#fff}
+.tab.ativa{color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.28)}
+#tab-controle.ativa{background:#2E5FA3;border-color:#5B8FD1}
+#tab-simulacao.ativa{background:#6B21A8;border-color:#9D4EDD}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px 28px;background:#EEF4FB;border-bottom:1px solid #E2EAF4;max-width:1500px;margin:0 auto;width:100%}
 .btn-aporte{background:#6B21A8;color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
 .btn-aporte:hover{background:#581C87}
 .extra-tag.clic{cursor:pointer;border:1px solid #E9D5FF}
 .extra-tag.clic:hover{background:#E9D5FF}
+.pg-badge{display:inline-block;background:#16A34A;color:#fff;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:8px;margin-left:8px;letter-spacing:.5px;text-transform:uppercase;vertical-align:middle}
+#simtab tbody tr.paga{background:#F0FDF4}
+#simtab tbody tr.paga:hover{background:#DCFCE7}
+#simtab input.sim-in.realizado{background:#F3E8FF;color:#6B21A8;border-color:#E9D5FF;font-weight:700}
 .sim-card{max-width:760px;margin:24px auto;background:#fff;border:1px solid #E2EAF4;border-radius:16px;padding:24px 28px;box-shadow:0 2px 12px rgba(31,56,100,.06)}
 .sim-card h2{font-size:16px;font-weight:700;color:#1F3864;margin-bottom:4px}
 .sim-card .desc{font-size:12.5px;color:#64748B;margin-bottom:18px;line-height:1.5}
@@ -85,7 +91,7 @@ body{font-family:'DM Sans',sans-serif;background:#F8FAFC;color:#1A2740;min-heigh
 .tabela-wrap{max-width:1500px;margin:0 auto;padding:16px 28px 40px}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #E2EAF4;box-shadow:0 2px 12px rgba(31,56,100,.06);table-layout:fixed}
 thead tr{background:#1F3864}
-thead th{padding:11px 12px;text-align:left;font-size:10px;font-weight:600;color:#AACCE8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+thead th{padding:11px 12px;text-align:left;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;color:#fff!important;font-weight:700!important;font-size:10.5px!important;font-family:'DM Sans',sans-serif!important}
 tbody tr{border-bottom:1px solid #E2EAF4;transition:background .1s}
 tbody tr:hover{background:#EEF4FB}
 tbody tr.row-prox{background:#FFFBEB}
@@ -621,20 +627,24 @@ function renderSimulacao(){
     + ' &nbsp;·&nbsp; Quitação: <b>'+(quit?fmtMesAno(quit):'—')+'</b>'
     + ' &nbsp;·&nbsp; Economia de juros: <b style="color:#15803D">'+fmtBRL(dJuros)+'</b>';
   // ---- tabela com inputs ----
+  const realizados = new Set(EXTRAS.map(function(e){ return Number(e.nParcela); })); // aportes já confirmados no Controle
   const tbody = document.getElementById('simbody');
   tbody.innerHTML = '';
   cron.forEach(function(l){
     const pg = pagamentoDe(l.n);
+    const realizado = realizados.has(l.n);   // valor já efetivado na planilha
+    const travado = pg || realizado;
     const val = SIM_EXTRAS[l.n] ? Number(SIM_EXTRAS[l.n]) : '';
+    const titulo = pg ? 'Parcela já paga' : (realizado ? 'Aporte já realizado — não editável' : '');
     const tr = document.createElement('tr');
-    if (pg) tr.style.background = '#F8FAFC';
+    if (pg) tr.className = 'paga';
     tr.innerHTML =
         '<td class="td-n">'+l.n+'</td>'
-      + '<td class="td-data">'+fmtData(l.data)+(pg?' <span title="paga" style="color:#16A34A">✓</span>':'')+'</td>'
+      + '<td class="td-data">'+fmtData(l.data)+(pg?' <span class="pg-badge">✓ Paga</span>':'')+'</td>'
       + '<td class="td-money num-cell">'+fmtBRLc(l.amort)+'</td>'
       + '<td class="td-money num-cell">'+fmtBRLc(l.juros)+'</td>'
       + '<td class="td-money num-cell"><b>'+fmtBRLc(l.parcela)+'</b></td>'
-      + '<td class="td-extra num-cell"><input class="sim-in" type="number" min="0" step="0.01" data-n="'+l.n+'" value="'+val+'" '+(pg?'disabled':'')+' placeholder="0" onkeydown="if(event.key===\'Enter\')recalcularCenario()"></td>'
+      + '<td class="td-extra num-cell"><input class="sim-in'+(realizado?' realizado':'')+'" type="number" min="0" step="0.01" data-n="'+l.n+'" value="'+val+'" '+(travado?'disabled':'')+(titulo?' title="'+titulo+'"':'')+' placeholder="0" onkeydown="if(event.key===\'Enter\')recalcularCenario()"></td>'
       + '<td class="td-money num-cell">'+fmtBRLc(l.saldoFim)+'</td>';
     tbody.appendChild(tr);
   });
