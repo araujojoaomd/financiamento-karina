@@ -155,15 +155,41 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
 .toast{position:fixed;bottom:24px;right:24px;background:#1F3864;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:600;opacity:0;transform:translateY(10px);transition:all .25s}
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.err{background:#B91C1C}
-@media(max-width:860px){
+@media(max-width:820px){
   .pnl-header-inner{flex-direction:column}
-  .cards{grid-template-columns:repeat(2,1fr);padding:12px 16px}
-  .filtros{padding:10px 16px}
-  .tabela-wrap{padding:12px 16px 32px}
-  .sim{padding:12px 16px}
-  td{padding:8px 8px;font-size:11.5px}
-  .td-money:nth-child(4),.td-money:nth-child(5){display:none}
-  thead th:nth-child(4),thead th:nth-child(5){display:none}
+  .pnl-header-brand{padding:12px 16px}
+  .pnl-header-right{align-items:flex-start;padding:10px 16px}
+  .tabs{padding:10px 10px;gap:6px}
+  .tab{padding:8px 18px;font-size:12.5px}
+  .cards{grid-template-columns:1fr 1fr;padding:10px 12px;gap:8px}
+  .card{min-height:auto;padding:10px 12px}
+  .card .num{font-size:17px}
+  .card .leg{font-size:10px}
+  .filtros{padding:10px 12px;gap:6px}
+  .filtros select{flex:1 1 auto}
+  .sim-toolbar{padding:10px 12px;gap:8px}
+  .sim-resumo{width:100%;order:5;line-height:2.1}
+  .tabela-wrap{padding:10px 10px 28px}
+  .modal{margin:0 8px}
+  .modal-bg{padding-top:20px}
+  .form-grid{grid-template-columns:1fr}
+
+  /* cada linha da tabela vira um cartão empilhado */
+  table,#simtab{border:none;box-shadow:none;background:transparent;table-layout:auto;width:100%}
+  thead{display:none}
+  tbody tr{display:block;background:#fff;border:1px solid #E2EAF4;border-radius:12px;margin-bottom:10px;padding:8px 14px 10px;box-shadow:0 1px 6px rgba(31,56,100,.06)}
+  tbody tr.row-prox{border:1.5px solid #F59E0B}
+  #simtab tbody tr.paga{background:#F0FDF4}
+  td{display:block!important;width:auto!important;padding:6px 0;border:none;border-bottom:1px solid #F4F6F9;text-align:left;font-size:13.5px;white-space:normal;overflow:visible}
+  tbody tr td:last-child{border-bottom:none}
+  td::before{content:attr(data-label);display:block;font-size:9.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:1px}
+  td.td-n{color:#1F3864;font-weight:700;font-size:15px;border-bottom:2px solid #EEF4FB;padding-bottom:8px}
+  td.td-n::before{color:#2E5FA3}
+  td.td-acoes::before{content:""}
+  td.col-sec{display:none!important}
+  .num-cell{text-align:left}
+  #simtab input.sim-in{width:150px;text-align:right}
+  td.td-acoes .btn-icon{padding:8px 16px;font-size:13px}
 }
 </style>
 </head>
@@ -546,14 +572,14 @@ function render(){
     const tr = document.createElement('tr');
     if (ehProx) tr.className = 'row-prox';
     tr.innerHTML =
-        '<td class="td-n">'+l.n+'</td>'
-      + '<td class="td-data">'+fmtData(l.data)+'</td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.amort)+'</td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.juros)+'</td>'
-      + '<td class="td-money num-cell"><b>'+fmtBRLc(l.parcela)+'</b></td>'
-      + '<td class="td-extra num-cell">'+extraCell+'</td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.saldoFim)+'</td>'
-      + '<td class="td-status">'+statusCell+'</td>'
+        '<td class="td-n" data-label="Parcela">'+l.n+'</td>'
+      + '<td class="td-data" data-label="Vencimento">'+fmtData(l.data)+'</td>'
+      + '<td class="td-money num-cell col-sec" data-label="Amortização">'+fmtBRLc(l.amort)+'</td>'
+      + '<td class="td-money num-cell col-sec" data-label="Juros">'+fmtBRLc(l.juros)+'</td>'
+      + '<td class="td-money num-cell" data-label="Valor da parcela"><b>'+fmtBRLc(l.parcela)+'</b></td>'
+      + '<td class="td-extra num-cell" data-label="Aporte">'+extraCell+'</td>'
+      + '<td class="td-money num-cell" data-label="Saldo após">'+fmtBRLc(l.saldoFim)+'</td>'
+      + '<td class="td-status" data-label="Status">'+statusCell+'</td>'
       + '<td class="td-acoes">'
         + (st==='pago'
             ? '<button class="btn-icon on" onclick=\'abrirPagamento('+l.n+')\' title="Editar pagamento">✓ paga</button>'
@@ -632,13 +658,13 @@ function renderSimulacao(){
     const tr = document.createElement('tr');
     if (pg) tr.className = 'paga';
     tr.innerHTML =
-        '<td class="td-n">'+l.n+'</td>'
-      + '<td class="td-data">'+fmtData(l.data)+(pg?' <span class="pg-badge">✓ Paga</span>':'')+'</td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.amort)+'</td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.juros)+'</td>'
-      + '<td class="td-money num-cell"><b>'+fmtBRLc(l.parcela)+'</b></td>'
-      + '<td class="td-extra num-cell"><input class="sim-in'+(realizado?' realizado':'')+'" type="number" min="0" step="0.01" data-n="'+l.n+'" value="'+val+'" '+(travado?'disabled':'')+(titulo?' title="'+titulo+'"':'')+' placeholder="0" onkeydown="if(event.key===\'Enter\')recalcularCenario()"></td>'
-      + '<td class="td-money num-cell">'+fmtBRLc(l.saldoFim)+'</td>';
+        '<td class="td-n" data-label="Parcela">'+l.n+'</td>'
+      + '<td class="td-data" data-label="Vencimento">'+fmtData(l.data)+(pg?' <span class="pg-badge">✓ Paga</span>':'')+'</td>'
+      + '<td class="td-money num-cell col-sec" data-label="Amortização">'+fmtBRLc(l.amort)+'</td>'
+      + '<td class="td-money num-cell col-sec" data-label="Juros">'+fmtBRLc(l.juros)+'</td>'
+      + '<td class="td-money num-cell" data-label="Valor da parcela"><b>'+fmtBRLc(l.parcela)+'</b></td>'
+      + '<td class="td-extra num-cell" data-label="Aporte extra"><input class="sim-in'+(realizado?' realizado':'')+'" type="number" min="0" step="0.01" data-n="'+l.n+'" value="'+val+'" '+(travado?'disabled':'')+(titulo?' title="'+titulo+'"':'')+' placeholder="0" onkeydown="if(event.key===\'Enter\')recalcularCenario()"></td>'
+      + '<td class="td-money num-cell" data-label="Saldo após">'+fmtBRLc(l.saldoFim)+'</td>';
     tbody.appendChild(tr);
   });
 }
