@@ -250,6 +250,7 @@ td{padding:10px 12px;font-size:12.5px;vertical-align:middle;overflow:hidden}
   <span class="cont-label" id="contLabel"></span>
   <button class="btn-aporte" onclick="abrirAporte()">+ Aporte extra</button>
   <button class="btn-atualizar" onclick="carregarDados()">↻ Atualizar</button>
+  <button class="btn-atualizar" onclick="abrirHistorico()">🕘 Histórico</button>
   <button class="btn-atualizar" onclick="abrirContrato()">📄 Contrato</button>
 </div>
 
@@ -323,6 +324,7 @@ let SENHA = null;
 let CONTRATO = null;
 let PAGAMENTOS = [];   // [{nParcela, dataPagamento, valorPago, linkComprovante}]
 let EXTRAS = [];       // [{nParcela, valor, data, obs, linkComprovante}]
+let LOG = [];          // [{dataHora, acao, parcela, detalhes}]
 let CRONOGRAMA = [];   // calculado
 let F = 'todas';
 
@@ -402,6 +404,7 @@ function aplicarDados(r){
   CONTRATO = r.contrato || {};
   PAGAMENTOS = r.pagamentos || [];
   EXTRAS = r.extras || [];
+  LOG = r.log || [];
   document.getElementById('tituloDevedor').textContent = CONTRATO.devedor || 'Financiamento';
   recalcular();
   render();
@@ -749,7 +752,7 @@ async function salvarAporte(){
 }
 
 async function desfazerAporte(n, indice){
-  if (!confirm('Desfazer este aporte extra da parcela '+n+'?')) return;
+  if (!confirm('Desfazer este aporte extra da parcela '+n+'?\n\nA ação fica registrada no Histórico (nada é perdido).')) return;
   const r = await chamar({ acao:'remover_extra', nParcela:n, indice:indice });
   if (r.ok){ toast('Aporte desfeito'); fecharModal(); await carregarDados(); }
   else { toast('Erro: '+(r.erro||'falha'), true); }
@@ -836,7 +839,7 @@ async function salvarPagamento(n){
 }
 
 async function desmarcarPagamento(n){
-  if (!confirm('Desfazer o registro de pagamento da parcela '+n+'? O comprovante anexado permanece no Drive.')) return;
+  if (!confirm('Desfazer o registro de pagamento da parcela '+n+'?\n\nO comprovante permanece no Drive e a ação fica registrada no Histórico (nada é perdido).')) return;
   const btn = document.getElementById('btnDesmarcar');
   btn.disabled = true; btn.textContent = 'Removendo…';
   const r = await chamar({acao:'desmarcar_pagamento', nParcela:n});
@@ -864,6 +867,34 @@ function enviarComprovante(tipo, n, file){
     reader.onerror = function(){ resolve(false); };
     reader.readAsDataURL(file);
   });
+}
+
+// === HISTÓRICO (log de auditoria) ===
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function abrirHistorico(){
+  document.getElementById('modalTitulo').textContent = 'Histórico de alterações';
+  let html;
+  if (!LOG.length){
+    html = '<div style="padding:16px;text-align:center;color:#64748B;font-size:13px">Nenhum registro ainda.</div>';
+  } else {
+    html = '<div class="modal-section"><div style="font-size:11.5px;color:#94A3B8;margin-bottom:10px;line-height:1.5">Registro de tudo que foi feito (mais recente no topo). É <b>só-adiciona</b>: nada é apagado daqui, mesmo ao desfazer um pagamento.</div>';
+    LOG.forEach(function(e){
+      const destr = /DESFEITO|REMOV/i.test(e.acao || '');
+      const cor = destr ? '#B91C1C' : '#1F3864';
+      const borda = destr ? '#FCA5A5' : '#2E5FA3';
+      const parc = (e.parcela !== '' && e.parcela != null) ? ' · parcela ' + e.parcela : '';
+      html += '<div class="obs-item" style="border-left-color:'+borda+'">'
+        + '<div class="obs-data">'+escapeHtml(e.dataHora||'')+parc+'</div>'
+        + '<div class="obs-txt"><b style="color:'+cor+'">'+escapeHtml(e.acao||'')+'</b>'
+        + (e.detalhes ? ' — '+escapeHtml(e.detalhes) : '')+'</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="form-acoes"><button class="btn-confirmar" onclick="fecharModal()">Fechar</button></div>';
+  document.getElementById('modalCorpo').innerHTML = html;
+  abrirModal();
 }
 
 // === CONTRATO ===
