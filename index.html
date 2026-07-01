@@ -351,6 +351,12 @@ async function tentarEntrar(s){
     localStorage.setItem(LS_SENHA, s);
     document.getElementById('loginTela').style.display = 'none';
     document.getElementById('appConteudo').style.display = '';
+    // No celular, começa filtrando as pendentes (a próxima a pagar fica no topo).
+    if (window.innerWidth <= 820) {
+      F = 'pendentes';
+      var selF = document.getElementById('fStatus');
+      if (selF) selF.value = 'pendentes';
+    }
     aplicarDados(r);
   } else if (r.erro === 'senha_invalida') {
     SENHA = null;
